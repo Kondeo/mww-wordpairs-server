@@ -32,7 +32,31 @@ $app->get('/page/:page', 'getPage');
 $app->run();
 
 function getPage($page) {
-    
+    $request = Slim::getInstance()->request()->get();
+
+    $sql = "SELECT
+
+        content
+
+        FROM book WHERE page=:page LIMIT 1";
+
+    try {
+        $db = getConnection();
+        $stmt = $db->prepare($sql);
+        $stmt->bindParam("page", $page);
+        $stmt->execute();
+        $content = $stmt->fetchObject();
+        $db = null;
+    } catch(PDOException $e) {
+        echo '{"error":{"text":'. $e->getMessage() .'}}';
+    }
+
+    if(!isset($content->content)){
+        echo '{"error":{"text":"That Page Does Not Exist","errorid":"404"}}';
+        exit;
+    }
+
+    echo json_encode($content);
 }
 
 function utf8ize($mixed) {
