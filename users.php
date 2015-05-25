@@ -23,8 +23,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 
 include 'Slim/Slim.php';
 
-require 'ProtectedDocs/connection.php';
-
 $app = new Slim();
 
 $app->get('/page/:page', 'getPage');
