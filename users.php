@@ -68,4 +68,14 @@ function utf8ize($mixed) {
     return $mixed;
 }
 
+function getConnection() {
+    $dbhost="devdb.kondeo.com";
+    $dbuser="m5rrckbr9fwpzjwj";
+    $dbpass="3gZQeML72QHQSFQW";
+    $dbname="mwwwordpairs";
+    $dbh = new PDO("mysql:host=$dbhost;dbname=$dbname", $dbuser, $dbpass);
+    $dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    return $dbh;
+}
+
 ?>
