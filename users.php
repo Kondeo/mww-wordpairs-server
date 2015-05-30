@@ -7,6 +7,7 @@ if (isset($_SERVER['HTTP_ORIGIN'])) {
     header('Access-Control-Max-Age: 86400');    // cache for 1 day
 }
 
+
 // Access-Control headers are received during OPTIONS requests
 if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 
@@ -19,7 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     exit(0);
 }
 
-
+header('Content-Type: text/html; charset=UTF-8');
 
 include 'Slim/Slim.php';
 
@@ -31,6 +32,10 @@ $app->run();
 
 function getPage($page) {
     $request = Slim::getInstance()->request()->get();
+    //header("Content-Type: text/plain; charset=ISO-8859-1");
+
+    //echo '<meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1"> ';
+echo '<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"> ';
 
     $sql = "SELECT
 
@@ -53,8 +58,7 @@ function getPage($page) {
         echo '{"error":{"text":"That Page Does Not Exist","errorid":"404"}}';
         exit;
     }
-
-    echo json_encode($content);
+    echo $content->content;
 }
 
 function utf8ize($mixed) {
@@ -73,7 +77,7 @@ function getConnection() {
     $dbuser="m5rrckbr9fwpzjwj";
     $dbpass="3gZQeML72QHQSFQW";
     $dbname="mwwwordpairs";
-    $dbh = new PDO("mysql:host=$dbhost;dbname=$dbname", $dbuser, $dbpass);
+    $dbh = new PDO("mysql:host=$dbhost;dbname=$dbname;charset=utf8", $dbuser, $dbpass);
     $dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     return $dbh;
 }
