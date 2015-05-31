@@ -26,13 +26,154 @@ include 'Slim/Slim.php';
 
 $app = new Slim();
 
-$app->get('/page/:page', 'getPage');
+$app->post('/login', 'userLogin');
+
+$app->get('/:token/page/:page', 'getPage');
+$app->get('/page/:page', 'getPageOLD');
 
 $app->run();
 
-function getPage($page) {
+function userLogin() {
+    $request = Slim::getInstance()->request();
+    $user = json_decode($request->getBody());
+
+    //Get Salt
+    $sql = "SELECT
+
+        salt
+
+        FROM users WHERE username=:username LIMIT 1";
+
+    try {
+        $db = getConnection();
+        $stmt = $db->prepare($sql);
+        $stmt->bindParam("username", $user->username);
+        $stmt->execute();
+        $response = $stmt->fetchObject();
+        $db = null;
+    } catch(PDOException $e) {
+        echo '{"error":{"text":'. $e->getMessage() .'}}';
+        exit;
+    }
+
+    //If user does not exist
+    if(!isset($response->salt)){
+        echo '{"error":{"text":"Username' . $user->username . ' does not exist","errorid":"23"}}';
+        exit;
+    }
+
+    //Crypt salt and password
+    $passwordcrypt = crypt($user->password, $response->salt);
+
+    //Get ID
+    $sql = "SELECT
+
+        id
+
+        FROM users WHERE username=:username AND password=:password LIMIT 1";
+
+    try {
+        $db = getConnection();
+        $stmt = $db->prepare($sql);
+        $stmt->bindParam("username", $user->username);
+        $stmt->bindParam("password", $passwordcrypt);
+        $stmt->execute();
+        $response = $stmt->fetchObject();
+        $db = null;
+    } catch(PDOException $e) {
+        echo '{"error":{"text":'. $e->getMessage() .'}}';
+        exit;
+    }
+
+    //If password is incorrect
+    if(!isset($response->id)){
+        echo '{"error":{"text":"Password is incorrect","errorid":"24"}}';
+        exit;
+    }
+
+    //Generate a session token
+    $length = 24;
+    $randomstring = bin2hex(openssl_random_pseudo_bytes($length, $strong));
+    if(!($strong = true)){
+        echo '{"error":{"text":"Did not generate secure random session token"}}';
+        exit;
+    }
+
+    //Delete old session token
+    $sql = "DELETE FROM sessions
+
+        WHERE
+
+        user_id=:user_id";
+
+    try {
+        $db = getConnection();
+        $stmt = $db->prepare($sql);
+        $stmt->bindParam("user_id", $response->id);
+        $stmt->execute();
+        $db = null;
+    } catch(PDOException $e) {
+        echo '{"error":{"text":'. $e->getMessage() .'}}';
+        exit;
+    }
+
+    //Insert session token
+    $sql = "INSERT INTO sessions
+
+        (user_id, token)
+
+        VALUES
+
+        (:user_id, :token)";
+
+    try {
+        $db = getConnection();
+        $stmt = $db->prepare($sql);
+        $stmt->bindParam("user_id", $response->id);
+        $stmt->bindParam("token", $randomstring);
+        $stmt->execute();
+        $response->session_token = $randomstring;
+        $session_token = $randomstring;
+        $db = null;
+    } catch(PDOException $e) {
+        echo '{"error":{"text":'. $e->getMessage() .'}}';
+        exit;
+    }
+
+    //Echo session token
+    echo '{"result":{"session_token":"'. $session_token .'"}}';
+}
+
+function getPage($token, $page) {
     $request = Slim::getInstance()->request()->get();
     echo '<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"> ';
+
+    $sql = "SELECT
+
+        content
+
+        FROM book WHERE page=:page LIMIT 1";
+
+    try {
+        $db = getConnection();
+        $stmt = $db->prepare($sql);
+        $stmt->bindParam("page", $page);
+        $stmt->execute();
+        $content = $stmt->fetchObject();
+        $db = null;
+    } catch(PDOException $e) {
+        echo '{"error":{"text":'. $e->getMessage() .'}}';
+    }
+
+    if(!isset($content->content)){
+        echo '{"error":{"text":"That Page Does Not Exist","errorid":"404"}}';
+        exit;
+    }
+    echo $content->content;
+}
+
+function getPageOLD($page) {
+    $request = Slim::getInstance()->request()->get();
 
     $sql = "SELECT
 
