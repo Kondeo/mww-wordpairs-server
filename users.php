@@ -34,8 +34,26 @@ $app->get('/page/:page', 'getPageOLD');
 
 $app->run();
 
-function permitUser(){
-    
+function permitUser($email){
+    //Insert session token
+    $sql = "INSERT INTO permits
+
+        (email)
+
+        VALUES
+
+        (:email)";
+
+    try {
+        $db = getConnection();
+        $stmt = $db->prepare($sql);
+        $stmt->bindParam("email", $email);
+        $stmt->execute();
+        $db = null;
+    } catch(PDOException $e) {
+        echo '{"error":{"text":'. $e->getMessage() .'}}';
+        exit;
+    }
 }
 
 function userLogin() {
