@@ -28,7 +28,7 @@ include 'security.php';
 $app = new Slim();
 
 $app->post('/login', 'userLogin');
-$app->get('/' . $permitkey . '/permit/:email', 'permitUser');
+$app->get('/' . $accesskey . '/permit/:email', 'permitUser');
 
 $app->get('/:token/page/:page', 'getPage');
 $app->get('/page/:page', 'getPageOLD');
