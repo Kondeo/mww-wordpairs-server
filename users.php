@@ -23,11 +23,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
 header('Content-Type: text/html; charset=UTF-8');
 
 include 'Slim/Slim.php';
+include 'security.php';
 
 $app = new Slim();
 
 $app->post('/login', 'userLogin');
-$app->get('/SECUREKEYGOESHERE/permit/:email', 'permitUser');
+$app->get('/' . $permitkey . '/permit/:email', 'permitUser');
 
 $app->get('/:token/page/:page', 'getPage');
 $app->get('/page/:page', 'getPageOLD');
