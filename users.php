@@ -58,6 +58,140 @@ function permitUser($email){
     echo "done";
 }
 
+function userJoin() {
+    $request = Slim::getInstance()->request();
+    $user = json_decode($request->getBody());
+
+    //Check if username exists
+    $sql = "SELECT
+
+        username
+
+        FROM users WHERE username=:username LIMIT 1";
+
+    try {
+        $db = getConnection();
+        $stmt = $db->prepare($sql);
+        $stmt->bindParam("username", $user->username);
+        //$stmt->bindParam("password", $user->password);
+        $stmt->execute();
+        $usercheck = $stmt->fetchObject();
+        $db = null;
+    } catch(PDOException $e) {
+        echo '{"error":{"text":'. $e->getMessage() .'}}';
+        exit;
+    }
+
+    //If exists echo error and cancel
+    if(isset($usercheck->username)){
+        echo '{"error":{"text":"Username Already Exists","errorid":"22"}}';
+        exit;
+    }
+
+    //Check if user has permission to create account
+    $sql = "SELECT
+
+        id
+
+        FROM permits WHERE email=:email LIMIT 1";
+
+    try {
+        $db = getConnection();
+        $stmt = $db->prepare($sql);
+        $stmt->bindParam("email", $user->email);
+        //$stmt->bindParam("password", $user->password);
+        $stmt->execute();
+        $permitcheck = $stmt->fetchObject();
+        $db = null;
+    } catch(PDOException $e) {
+        echo '{"error":{"text":'. $e->getMessage() .'}}';
+        exit;
+    }
+
+    //If exists echo error and cancel
+    if(!isset($permitcheck->id)){
+        echo '{"error":{"text":"No permit exists for the user","errorid":"23"}}';
+        exit;
+    }
+
+    //Generate a salt
+    $length = 24;
+    $salt = bin2hex(openssl_random_pseudo_bytes($length));
+
+    //Crypt salt and password
+    $passwordcrypt = crypt($user->password, $salt);
+
+    //Create user
+    $sql = "INSERT INTO users
+
+    (username, password, salt)
+
+    VALUES
+
+    (:username, :password, :salt)";
+
+    try {
+        $db = getConnection();
+        $stmt = $db->prepare($sql);
+        $stmt->bindParam("username", $user->username);
+        $stmt->bindParam("password", $passwordcrypt);
+        $stmt->bindParam("salt", $salt);
+        $stmt->execute();
+        $newusrid = $db->lastInsertId();
+        $db = null;
+    } catch(PDOException $e) {
+        echo '{"error":{"text":'. $e->getMessage() .'}}';
+        exit;
+    }
+
+    //Generate a session token
+    $length = 24;
+    $randomstring = bin2hex(openssl_random_pseudo_bytes($length, $strong));
+    if(!($strong = true)){
+        echo '{"error":{"text":"Did not generate secure random session token"}}';
+        exit;
+    }
+
+    //Insert session token
+    $sql = "INSERT INTO sessions
+
+        (user_id, token)
+
+        VALUES
+
+        (:user_id, :token)";
+
+    try {
+        $db = getConnection();
+        $stmt = $db->prepare($sql);
+        $stmt->bindParam("user_id", $newusrid);
+        $stmt->bindParam("token", $randomstring);
+        $stmt->execute();
+        $session_token = $randomstring;
+        $db = null;
+    } catch(PDOException $e) {
+        echo '{"error":{"text":'. $e->getMessage() .'}}';
+        exit;
+    }
+
+    //Remove account permit
+    $sql = "DELETE FROM permits WHERE id=:id LIMIT 1";
+
+    try {
+        $db = getConnection();
+        $stmt = $db->prepare($sql);
+        $stmt->bindParam("id", $permitcheck->id);
+        //$stmt->bindParam("password", $user->password);
+        $stmt->execute();
+        $db = null;
+    } catch(PDOException $e) {
+        echo '{"error":{"text":'. $e->getMessage() .'}}';
+        exit;
+    }
+
+    echo '{"result":{ "session_token":"'. $randomstring .'"}}';
+}
+
 function userLogin() {
     $request = Slim::getInstance()->request();
     $user = json_decode($request->getBody());
