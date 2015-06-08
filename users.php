@@ -30,7 +30,7 @@ $app = new Slim();
 $app->post('/login', 'userLogin');
 $app->get('/' . $accesskey . '/permit/:email', 'permitUser');
 
-$app->get('/:token/page/:page', 'getPage');
+$app->get('/page/:page/:token', 'getPage');
 $app->get('/page/:page', 'getPageOLD');
 
 $app->run();
@@ -303,7 +303,7 @@ function userLogin() {
     echo '{"result":{"session_token":"'. $session_token .'"}}';
 }
 
-function getPage($token, $page) {
+function getPage($page, $token) {
     $request = Slim::getInstance()->request()->get();
     echo '<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"> ';
 
