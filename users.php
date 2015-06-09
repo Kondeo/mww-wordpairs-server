@@ -28,6 +28,7 @@ include 'security.php';
 $app = new Slim();
 
 $app->post('/login', 'userLogin');
+$app->post('/register', 'userJoin');
 $app->get('/' . $accesskey . '/permit/:email', 'permitUser');
 
 $app->get('/page/:page/:token', 'getPage');
