@@ -32,7 +32,6 @@ $app->post('/register', 'userJoin');
 $app->get('/' . $accesskey . '/permit/:email', 'permitUser');
 
 $app->get('/page/:page/:token', 'getPage');
-$app->get('/page/:page', 'getPageOLD');
 
 $app->run();
 
@@ -328,33 +327,6 @@ function getPage($page, $token) {
         echo '{"error":{"text":"Token is not valid","errorid":"12"}}';
         exit;
     }
-
-    $sql = "SELECT
-
-        content
-
-        FROM book WHERE page=:page LIMIT 1";
-
-    try {
-        $db = getConnection();
-        $stmt = $db->prepare($sql);
-        $stmt->bindParam("page", $page);
-        $stmt->execute();
-        $content = $stmt->fetchObject();
-        $db = null;
-    } catch(PDOException $e) {
-        echo '{"error":{"text":'. $e->getMessage() .'}}';
-    }
-
-    if(!isset($content->content)){
-        echo '{"error":{"text":"That Page Does Not Exist","errorid":"404"}}';
-        exit;
-    }
-    echo $content->content;
-}
-
-function getPageOLD($page) {
-    $request = Slim::getInstance()->request()->get();
 
     $sql = "SELECT
 
