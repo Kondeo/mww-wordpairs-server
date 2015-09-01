@@ -91,7 +91,7 @@ function userJoin() {
     //Check if user has permission to create account
     $sql = "SELECT
 
-        id
+        id, email
 
         FROM permits WHERE email=:email LIMIT 1";
 
@@ -124,11 +124,11 @@ function userJoin() {
     //Create user
     $sql = "INSERT INTO users
 
-    (username, password, salt)
+    (username, password, salt, email)
 
     VALUES
 
-    (:username, :password, :salt)";
+    (:username, :password, :salt, :email)";
 
     try {
         $db = getConnection();
@@ -136,6 +136,7 @@ function userJoin() {
         $stmt->bindParam("username", $user->username);
         $stmt->bindParam("password", $passwordcrypt);
         $stmt->bindParam("salt", $salt);
+        $stmt->bindParam("email", $permitcheck->email);
         $stmt->execute();
         $newusrid = $db->lastInsertId();
         $db = null;
